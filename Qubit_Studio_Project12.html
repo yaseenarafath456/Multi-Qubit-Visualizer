@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qubit Studio — Multi-Qubit State Visualiser</title>
+<style>
+:root{--bg:#08111f;--panel:#101e32;--panel2:#142641;--line:#29415f;--text:#eef5ff;--muted:#9eb2cb;--cyan:#57d8e7;--blue:#76a9ff;--gold:#ffca72;--green:#74e0b2;--red:#ff8c98}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0%,#132d4a 0,#08111f 45%);color:var(--text);font:15px/1.5 Inter,Segoe UI,Arial,sans-serif}
+header{max-width:1200px;margin:auto;padding:28px 24px 18px;display:flex;justify-content:space-between;align-items:center;gap:18px}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;color:#071323;font-weight:900;font-size:22px}
+h1{font-size:24px;margin:0;letter-spacing:.2px}header p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.pill{border:1px solid #315271;color:#bcecf2;border-radius:999px;padding:7px 12px;font-size:12px;white-space:nowrap}
+main{max-width:1200px;margin:auto;padding:0 24px 48px}.intro{margin:8px 0 20px;color:var(--muted);max-width:800px}
+.grid{display:grid;grid-template-columns:350px 1fr;gap:18px}.panel{background:linear-gradient(180deg,rgba(20,38,65,.96),rgba(13,27,46,.96));border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 12px 35px #0003}
+.panel h2{font-size:16px;margin:0 0 14px}.panel h3{font-size:13px;color:#c8d8ed;margin:18px 0 8px}
+label{display:block;color:var(--muted);font-size:12px;margin:12px 0 6px}select,input,button{font:inherit}
+select,input[type=number],input[type=text]{width:100%;background:#091729;border:1px solid #34506e;color:var(--text);border-radius:10px;padding:10px 11px;outline:none}
+select:focus,input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #57d8e722}
+button{border:1px solid #365779;background:#193454;color:var(--text);padding:9px 12px;border-radius:10px;cursor:pointer;transition:.15s}
+button:hover{border-color:var(--cyan);transform:translateY(-1px)}button.primary{background:linear-gradient(135deg,#4ccbdc,#659bff);color:#061323;border:0;font-weight:750}
+button.ghost{background:#0b1b2e}button.active{border-color:var(--cyan);background:#16435a}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.small{font-size:12px;color:var(--muted)}.note{font-size:12px;color:var(--muted);background:#0a1a2b;border:1px solid #243d59;border-radius:10px;padding:10px;margin-top:12px}
+.status{font-size:12px;margin-top:10px;min-height:18px}.status.ok{color:var(--green)}.status.bad{color:var(--red)}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:12px}.tabs{display:flex;gap:7px;flex-wrap:wrap}.tab{padding:8px 11px;font-size:12px}
+.visual-wrap{margin-top:14px;background:#091729;border:1px solid #243d59;border-radius:14px;padding:18px;min-height:270px}
+.state-grid{display:grid;grid-template-columns:repeat(4,minmax(90px,1fr));gap:12px}
+.state-item{min-height:170px;border:1px solid #29435f;background:#10243b;border-radius:14px;padding:13px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px}
+.orb{border-radius:50%;background:radial-gradient(circle at 35% 30%,#c6fbff,#55d5e4 45%,#2877aa 100%);box-shadow:0 0 24px #57d8e744;border:1px solid #a4f4f7;min-width:16px;min-height:16px}
+.basis{font-size:15px;font-weight:700}.amp{font-size:11px;color:var(--muted)}.phase{font-size:10px;color:#91c6ff}
+.ket{font-family:Cambria,Georgia,serif;font-size:20px;line-height:1.8;overflow-wrap:anywhere;color:#f4f8ff}
+.ket .term{display:inline-block;margin:0 8px 5px 0;white-space:nowrap}.ket .zero{opacity:.42}
+.prob-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.prob{background:#10243b;border:1px solid #29435f;border-radius:11px;padding:10px}.prob-head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}.bar{height:7px;background:#203954;border-radius:20px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--blue));border-radius:20px}
+.quiz-q{font-size:16px;margin:8px 0 12px}.answers{display:grid;gap:8px}.answers button{text-align:left;background:#0b1b2e}.answers button.correct{border-color:var(--green);background:#123b37}.answers button.wrong{border-color:var(--red);background:#40232c}
+.feedback{margin-top:12px;padding:11px;border-radius:10px;background:#0b1b2e;color:var(--muted);min-height:42px;font-size:13px}
+footer{color:#748ba7;text-align:center;font-size:11px;padding:20px}
+.hidden{display:none!important}
+@media(max-width:850px){.grid{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.state-grid{grid-template-columns:repeat(2,minmax(90px,1fr))}}
+@media(max-width:450px){main{padding:0 12px 30px}header{padding:20px 12px}.panel{padding:15px}.prob-list{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+ <div class="brand"><div class="logo">ψ</div><div><h1>Qubit Studio</h1><p>Multi-Qubit State Visualiser · Project 12</p></div></div>
+ <div class="pill">INTERACTIVE LEARNING DEMO</div>
+</header>
+<main>
+ <p class="intro">Explore two- and three-qubit pure states. Compare a circle-based amplitude view with Dirac notation, inspect computational-basis measurement probabilities, and test your understanding.</p>
+ <div class="grid">
+  <section class="panel">
+   <h2>State controls</h2>
+   <label for="qubits">Number of qubits</label>
+   <select id="qubits"><option value="2">2 qubits · 4 basis states</option><option value="3">3 qubits · 8 basis states</option></select>
+   <label for="preset">Example state</label>
+   <select id="preset">
+    <option value="zero">Basis state |00…0⟩</option>
+    <option value="plus0">Separable state |+⟩ ⊗ |0⟩</option>
+    <option value="bell">Bell state |Φ⁺⟩</option>
+    <option value="ghz">Three-qubit GHZ state</option>
+    <option value="uniform">Uniform superposition</option>
+   </select>
+   <div class="note">Choose an example, then switch between the visual, ket and probability views. The same state data drives every view.</div>
+   <h3>Quick examples</h3>
+   <div class="preset-grid">
+    <button data-preset="zero">|00…0⟩</button><button data-preset="plus0">|+0⟩</button>
+    <button data-preset="bell">Bell |Φ⁺⟩</button><button data-preset="uniform">Uniform</button>
+   </div>
+   <div id="customArea">
+    <h3>Custom amplitudes (advanced)</h3>
+    <p class="small">Enter real amplitudes in basis order. Values are normalized only if you press the button.</p>
+    <label for="custom">Comma-separated values</label>
+    <input id="custom" type="text" value="1,0,0,0" spellcheck="false">
+    <div class="row" style="margin-top:8px"><button id="apply">Apply values</button><button id="normalize" class="ghost">Normalize</button></div>
+    <div id="status" class="status"></div>
+   </div>
+  </section>
+  <section class="panel">
+   <div class="topline"><h2>State explorer</h2><span class="pill" id="stateTag">2-QUBIT STATE</span></div>
+   <div class="tabs">
+    <button class="tab active" data-view="circles">Circle notation</button>
+    <button class="tab" data-view="ket">Dirac notation</button>
+    <button class="tab" data-view="prob">Probabilities</button>
+   </div>
+   <div class="visual-wrap">
+    <div id="circlesView"><div class="state-grid" id="stateGrid"></div><p class="small">Circle size represents amplitude magnitude. Phase is shown separately as an angle. This is a teaching encoding, not a universal quantum-state diagram.</p></div>
+    <div id="ketView" class="hidden"><div class="ket" id="ketText"></div><p class="small">Each coefficient is the complex amplitude associated with its computational-basis ket.</p></div>
+    <div id="probView" class="hidden"><div class="prob-list" id="probList"></div><p class="small">Computational-basis measurement probability = |amplitude|².</p></div>
+   </div>
+   <div class="row" style="margin-top:14px">
+    <div class="note"><strong style="color:var(--cyan)">Normalization</strong><br><span id="normValue">Σ |αᵢ|² = 1.000</span></div>
+    <div class="note"><strong style="color:var(--cyan)">State type</strong><br><span id="stateType">Basis state</span></div>
+   </div>
+  </section>
+ </div>
+ <section class="panel" style="margin-top:18px">
+  <div class="topline"><div><h2 style="margin-bottom:2px">Knowledge check</h2><div class="small">A short quiz on amplitudes, probabilities and entanglement.</div></div><span class="pill" id="quizProgress">QUESTION 1 / 4</span></div>
+  <div class="quiz-q" id="question"></div><div class="answers" id="answers"></div>
+  <div class="feedback" id="feedback">Choose an answer to see an explanation.</div>
+  <div class="row" style="margin-top:12px"><button id="restart" class="ghost">Restart quiz</button><button id="next" class="primary" disabled>Next question</button></div>
+ </section>
+</main>
+<footer>Qubit Studio · Educational prototype · Ideal mathematical state representations</footer>
+<script>
+const $=id=>document.getElementById(id);
+let n=2, amps=[{re:1,im:0},{re:0,im:0},{re:0,im:0},{re:0,im:0}], view='circles';
+const basis=()=>Array.from({length:2**n},(_,i)=>i.toString(2).padStart(n,'0'));
+const mag=a=>Math.hypot(a.re,a.im), prob=a=>mag(a)**2, phase=a=>Math.atan2(a.im,a.re)*180/Math.PI;
+const fmt=x=>Math.abs(x)<1e-8?'0':(Math.round(x*1000)/1000).toString();
+function complexText(a){if(Math.abs(a.im)<1e-8)return fmt(a.re);if(Math.abs(a.re)<1e-8)return fmt(a.im)+'i';return fmt(a.re)+(a.im<0?' − ':' + ')+fmt(Math.abs(a.im))+'i'}
+function ket(){return basis().map((b,i)=>({b,a:amps[i]})).map(({b,a})=>`<span class="term ${mag(a)<1e-8?'zero':''}">${complexText(a)}|${b}⟩</span>`).join(' + ')}
+function typeName(){
+ const nz=amps.filter(a=>prob(a)>1e-8).length;
+ if(nz===1)return 'Computational basis state';
+ if(n===2 && Math.abs(amps[0].re-amps[3].re)<1e-6 && Math.abs(amps[1].re)<1e-6 && Math.abs(amps[2].re)<1e-6 && Math.abs(Math.abs(amps[0].re)-1/Math.sqrt(2))<1e-5)return 'Bell-state example';
+ if(nz===2)return 'Two-term superposition';
+ return 'General pure state';
+}
+function render(){
+ const bs=basis(), norm=amps.reduce((s,a)=>s+prob(a),0);
+ $('stateTag').textContent=n+'-QUBIT STATE'; $('normValue').textContent='Σ |αᵢ|² = '+norm.toFixed(3); $('stateType').textContent=typeName();
+ $('stateGrid').innerHTML=bs.map((b,i)=>{let m=mag(amps[i]), size=16+Math.sqrt(m)*58, ph=phase(amps[i]);return `<div class="state-item"><div class="orb" style="width:${size}px;height:${size}px;opacity:${m<.001?.2:.45+.55*Math.min(1,m)}"></div><div class="basis">|${b}⟩</div><div class="amp">|α| = ${m.toFixed(3)}</div><div class="phase">phase ${ph.toFixed(1)}°</div></div>`}).join('');
+ $('ketText').innerHTML='|ψ⟩ = '+ket();
+ $('probList').innerHTML=bs.map((b,i)=>{let p=prob(amps[i]);return `<div class="prob"><div class="prob-head"><strong>|${b}⟩</strong><span>${(p*100).toFixed(1)}%</span></div><div class="bar"><div class="fill" style="width:${Math.min(100,p*100)}%"></div></div></div>`}).join('');
+ $('custom').value=amps.map(a=>fmt(a.re)).join(',');
+}
+function setState(kind){
+ const count=2**n; amps=Array.from({length:count},()=>({re:0,im:0}));
+ if(kind==='zero')amps[0].re=1;
+ if(kind==='plus0'){if(n===2){amps[0].re=1/Math.sqrt(2);amps[2].re=1/Math.sqrt(2)}else{amps[0].re=1/Math.sqrt(2);amps[4].re=1/Math.sqrt(2)}}
+ if(kind==='bell'){if(n===2){amps[0].re=1/Math.sqrt(2);amps[3].re=1/Math.sqrt(2)}else{amps[0].re=1/Math.sqrt(2);amps[7].re=1/Math.sqrt(2)}}
+ if(kind==='ghz'){n=3;$('qubits').value='3';amps=Array.from({length:8},()=>({re:0,im:0}));amps[0].re=1/Math.sqrt(2);amps[7].re=1/Math.sqrt(2)}
+ if(kind==='uniform')amps=Array.from({length:count},()=>({re:1/Math.sqrt(count),im:0}));
+ $('preset').value=kind; $('status').textContent='';render();
+}
+function setView(v){view=v;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));['circles','ket','prob'].forEach(x=>$(x+'View').classList.toggle('hidden',x!==v))}
+$('qubits').addEventListener('change',e=>{n=+e.target.value;setState($('preset').value==='ghz'&&n===2?'zero':$('preset').value)});
+$('preset').addEventListener('change',e=>setState(e.target.value));
+document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>setState(b.dataset.preset));
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+function parseInput(){let vals=$('custom').value.split(',').map(x=>Number(x.trim()));if(vals.length!==2**n||vals.some(x=>!Number.isFinite(x)))throw Error(`Enter exactly ${2**n} finite real values.`);return vals.map(x=>({re:x,im:0}))}
+$('apply').onclick=()=>{try{amps=parseInput();let norm=amps.reduce((s,a)=>s+prob(a),0);if(Math.abs(norm-1)>1e-5){$('status').className='status bad';$('status').textContent='Not normalized (sum of squares = '+norm.toFixed(3)+'). Use Normalize or enter a normalized state.'}else{$('status').className='status ok';$('status').textContent='Valid normalized state applied.'}render()}catch(e){$('status').className='status bad';$('status').textContent=e.message}};
+$('normalize').onclick=()=>{try{amps=parseInput();let norm=Math.sqrt(amps.reduce((s,a)=>s+prob(a),0));if(norm===0)throw Error('Zero vector cannot be normalized.');amps=amps.map(a=>({re:a.re/norm,im:0}));$('status').className='status ok';$('status').textContent='Values normalized and applied.';render()}catch(e){$('status').className='status bad';$('status').textContent=e.message}};
+const quiz=[
+ {q:'What is the measurement probability for a basis outcome with amplitude α?',a:['|α|','|α|²','α² without magnitude'],c:1,e:'In the computational basis, the probability is the squared magnitude of the amplitude: |α|².'},
+ {q:'How many computational-basis states are there for 3 qubits?',a:['3','6','8'],c:2,e:'There are 2ⁿ basis states. For three qubits, 2³ = 8.'},
+ {q:'Which statement best describes an entangled Bell state?',a:['It can be factored into independent single-qubit states.','It cannot be written as a product of single-qubit states.','It is a classical bit string.'],c:1,e:'A Bell state is entangled: it cannot be factored into a product of independent single-qubit states.'},
+ {q:'What condition must a pure state satisfy?',a:['The amplitudes must all be equal.','The sum of squared amplitude magnitudes must equal 1.','There can only be one non-zero amplitude.'],c:1,e:'Normalization requires Σ |αᵢ|² = 1.'}
+];let qi=0,score=0,answered=false;
+function showQ(){let q=quiz[qi];$('quizProgress').textContent=`QUESTION ${qi+1} / ${quiz.length}`;$('question').textContent=q.q;$('answers').innerHTML=q.a.map((a,i)=>`<button data-answer="${i}">${String.fromCharCode(65+i)}. ${a}</button>`).join('');$('feedback').textContent='Choose an answer to see an explanation.';$('next').disabled=true;answered=false;document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>answer(+b.dataset.answer))}
+function answer(i){if(answered)return;answered=true;let q=quiz[qi],ok=i===q.c;if(ok)score++;document.querySelectorAll('[data-answer]').forEach((b,j)=>{b.disabled=true;if(j===q.c)b.classList.add('correct');else if(j===i)b.classList.add('wrong')});$('feedback').textContent=(ok?'Correct. ':'Not quite. ')+q.e;$('next').disabled=false}
+$('next').onclick=()=>{if(qi<quiz.length-1){qi++;showQ()}else{$('question').textContent=`Quiz complete — ${score} / ${quiz.length} correct`;$('answers').innerHTML='';$('feedback').textContent='You can restart to try again.';$('quizProgress').textContent='COMPLETED';$('next').disabled=true}};
+$('restart').onclick=()=>{qi=0;score=0;showQ()};
+setState('zero');showQ();
+</script>
+</body>
+</html>
